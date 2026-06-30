@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Language Translator - Speak & Translate</title>
+    <!-- Tailwind CSS Engine -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- FontAwesome Premium Icon Library -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Custom Glowing & Glassmorphic Background System as per image 1000056749.png */
+        body {
+            background: radial-gradient(circle at 50% 50%, #201742 0%, #0d091e 100%);
+            overflow-x: hidden;
+        }
+
+        .glass-panel {
+            background: rgba(18, 22, 38, 0.55);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+        }
+
+        .glass-input-card {
+            background: rgba(26, 30, 54, 0.45);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.02);
+        }
+
+        /* Ambient glows */
+        .ambient-glow {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(120px);
+            z-index: 0;
+            pointer-events: none;
+            opacity: 0.35;
+        }
+
+        /* Pulsing Audio Ring Wave */
+        .glowing-circle {
+            background: radial-gradient(circle, #00f2fe 0%, #4facfe 100%);
+            box-shadow: 0 0 30px rgba(0, 242, 254, 0.6), inset 0 0 15px rgba(255, 255, 255, 0.5);
+            transition: all 0.3s ease;
+        }
+
+        .glowing-circle.recording {
+            animation: pulse-ring 1.5s infinite ease-in-out;
+            background: radial-gradient(circle, #ff007f 0%, #7928ca 100%);
+            box-shadow: 0 0 40px rgba(255, 0, 127, 0.8);
+        }
+
+        @keyframes pulse-ring {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); box-shadow: 0 0 50px rgba(255, 0, 127, 0.9), 0 0 20px rgba(121, 40, 202, 0.5); }
+            100% { transform: scale(1); }
+        }
+
+        /* Interactive Equalizer Bars */
+        .eq-bar {
+            width: 2px;
+            background: linear-gradient(to top, #4facfe, #00f2fe);
+            border-radius: 4px;
+            height: 6px;
+            transition: height 0.1s ease;
+        }
+
+        .recording .eq-bar {
+            background: linear-gradient(to top, #7928ca, #ff007f);
+            animation: bounce-wave 0.8s infinite ease-in-out alternate;
+        }
+
+        @keyframes bounce-wave {
+            0% { height: 4px; }
+            100% { height: 35px; }
+        }
+
+        /* Delay animation values to look natural */
+        .eq-bar:nth-child(2n) { animation-delay: 0.15s; }
+        .eq-bar:nth-child(3n) { animation-delay: 0.3s; }
+        .eq-bar:nth-child(4n) { animation-delay: 0.45s; }
+        .eq-bar:nth-child(5n) { animation-delay: 0.05s; }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <!-- Ambient glow lights in backdrop -->
+    <div class="ambient-glow w-96 h-96 bg-purple-600 top-10 left-10"></div>
+    <div class="ambient-glow w-[500px] h-[500px] bg-blue-500 bottom-10 right-10"></div>
+
+    <!-- Main Mobile Container (Matching exact layout of 1000056749.png) -->
+    <div class="w-full max-w-md glass-panel rounded-[38px] p-6 relative overflow-hidden flex flex-col gap-5 z-10">
+        
+        <!-- Header Section -->
+        <div class="flex items-center justify-between w-full">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg border border-white/10">
+                    <i class="fa-solid fa-language text-white text-2xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-white font-semibold text-lg tracking-wide leading-tight">AI Language Translator</h1>
+                    <p class="text-gray-400 text-xs font-medium">Translate, Speak & Understand</p>
+                </div>
+            </div>
+            <button class="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 transition flex items-center justify-center border border-white/5 cursor-pointer">
+                <i class="fa-solid fa-bars text-white/80"></i>
+            </button>
+        </div>
+
+        <!-- Card 1: FROM Language Area -->
+        <div class="glass-input-card rounded-3xl p-4 flex flex-col gap-3 relative">
+            <span class="text-gray-500 text-xs font-semibold tracking-wider uppercase">From</span>
+            
+            <!-- Language Dropdown selector -->
+            <div class="flex items-center justify-between bg-black/20 rounded-xl p-3 border border-white/5">
+                <div class="flex items-center gap-2 text-white">
+                    <i class="fa-solid fa-globe text-blue-400 text-sm"></i>
+                    <select id="from-lang-select" class="bg-transparent text-sm font-medium focus:outline-none cursor-pointer text-white pr-2">
+                        <option value="en-US" class="bg-[#121626]">English</option>
+                        <option value="es-ES" class="bg-[#121626]">Spanish</option>
+                        <option value="fr-FR" class="bg-[#121626]">French</option>
+                        <option value="ar-SA" class="bg-[#121626]">Arabic</option>
+                        <option value="hi-IN" class="bg-[#121626]">Hindi</option>
+                    </select>
+                </div>
+                <i class="fa-solid fa-chevron-down text-gray-500 text-xs"></i>
+            </div>
+
+            <!-- Input Text Box -->
+            <textarea id="from-text" placeholder="Type or speak something..." class="w-full h-24 bg-transparent text-white placeholder-gray-500 text-sm resize-none focus:outline-none mt-1" maxlength="500"></textarea>
+
+            <!-- Card bottom status & voice tools -->
+            <div class="flex justify-between items-center mt-1">
+                <div class="flex gap-2">
+                    <!-- Text keyboard state -->
+                    <button id="keyboard-btn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 text-gray-400 hover:text-white transition text-xs border border-white/5 cursor-pointer">
+                        <i class="fa-solid fa-keyboard"></i>
+                        <span>Advanced Text</span>
+                    </button>
+                    <!-- Input Mic Button (Bidirectional Mic 1) -->
+                    <button id="mic-btn-from" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 transition text-xs border border-blue-500/20 cursor-pointer">
+                        <i class="fa-solid fa-microphone"></i>
+                        <span id="mic-label-from">Voice Input</span>
+                    </button>
+                </div>
+                <span id="char-counter" class="text-gray-500 text-xs">0 / 500</span>
+            </div>
+        </div>
+
+        <!-- Central Action / Swap Button -->
+        <div class="flex justify-center -my-3 z-10">
+            <button id="swap-btn" class="w-10 h-10 rounded-full bg-[#1e1e2f] border border-white/10 hover:border-blue-400/50 flex items-center justify-center shadow-lg hover:scale-105 transition active:scale-95 cursor-pointer">
+                <i class="fa-solid fa-arrow-up-down text-blue-400 text-sm"></i>
+            </button>
+        </div>
+
+        <!-- Card 2: TO Language Area -->
+        <div class="glass-input-card rounded-3xl p-4 flex flex-col gap-3">
+            <span class="text-gray-500 text-xs font-semibold tracking-wider uppercase">To</span>
+            
+            <!-- Language Dropdown selector -->
+            <div class="flex items-center justify-between bg-black/20 rounded-xl p-3 border border-white/5">
+                <div class="flex items-center gap-2 text-white">
+                    <i class="fa-solid fa-globe text-purple-400 text-sm"></i>
+                    <select id="to-lang-select" class="bg-transparent text-sm font-medium focus:outline-none cursor-pointer text-white pr-2">
+                        <option value="hi-IN" class="bg-[#121626]">Hindi</option>
+                        <option value="en-US" class="bg-[#121626]">English</option>
+                        <option value="es-ES" class="bg-[#121626]">Spanish</option>
+                        <option value="fr-FR" class="bg-[#121626]">French</option>
+                        <option value="ar-SA" class="bg-[#121626]">Arabic</option>
+                    </select>
+                </div>
+                <i class="fa-solid fa-chevron-down text-gray-500 text-xs"></i>
+            </div>
+
+            <!-- Output Text Box -->
+            <div class="w-full h-24 bg-transparent text-white text-sm focus:outline-none mt-1 overflow-y-auto" id="translated-box-container">
+                <p id="to-text" class="text-gray-500 italic">Translation will appear here...</p>
+            </div>
+
+            <!-- Card bottom control tray -->
+            <div class="flex justify-between items-center mt-1">
+                <div class="flex gap-2">
+                    <!-- Listen Text to Speech (TTS) -->
+                    <button id="btn-speak" class="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white flex items-center justify-center transition cursor-pointer" title="Listen Translation">
+                        <i class="fa-solid fa-volume-high"></i>
+                    </button>
+                    <!-- Copy to Clipboard -->
+                    <button id="btn-copy" class="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white flex items-center justify-center transition cursor-pointer" title="Copy Text">
+                        <i class="fa-solid fa-copy"></i>
+                    </button>
+                    <!-- Share option -->
+                    <button id="btn-share" class="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white flex items-center justify-center transition cursor-pointer" title="Share">
+                        <i class="fa-solid fa-share-nodes"></i>
+                    </button>
+                </div>
+                
+                <div class="flex gap-2">
+                    <!-- Bidirectional Mic 2 (Listen side microphone input) -->
+                    <button id="mic-btn-to" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-500/10 text-purple-400 hover:bg-purple-500/20 transition text-xs border border-purple-500/20 cursor-pointer">
+                        <i class="fa-solid fa-microphone"></i>
+                        <span id="mic-label-to">Voice Input</span>
+                    </button>
+                    <!-- Floating Quick Listen trigger -->
+                    <button id="quick-listen-btn" class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-indigo-500/20 hover:bg-indigo-500/35 text-indigo-300 font-medium transition text-xs border border-indigo-500/30 cursor-pointer">
+                        <i class="fa-solid fa-headphones"></i>
+                        <span>Listen</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Interactive Voice Orb / Visualization Area (Tap to Speak) -->
+        <div class="flex flex-col items-center justify-center gap-3 py-2 relative">
+            <span id="waveform-status-label" class="text-gray-400 text-xs font-semibold tracking-wider">Tap to Speak</span>
+
+            <div class="flex items-center justify-between w-full px-8 relative h-16">
+                <!-- Left-side static/active waveform -->
+                <div id="left-wave" class="flex items-center gap-1 h-10 w-20 justify-end">
+                    <div class="eq-bar"></div>
+                    <div class="eq-bar"></div>
+                    <div class="eq-bar"></div>
+                    <div class="eq-bar"></div>
+                    <div class="eq-bar"></div>
+                    <div class="eq-bar"></div>
+                </div>
+
+                <!-- Circular central trigger orb -->
+                <button id="central-voice-orb" class="w-16 h-16 rounded-full glowing-circle flex items-center justify-center z-10 cursor-pointer relative transition-transform active:scale-90">
+                    <i id="orb-icon" class="fa-solid fa-microphone text-white text-xl"></i>
+                </button>
+
+                <!-- Right-side static/active waveform -->
+                <div id="right-wave" class="flex items-center gap-1 h-10 w-20 justify-start">
+                    <div class="eq-bar"></div>
+                    <div class="eq-bar"></div>
+                    <div class="eq-bar"></div>
+                    <div class="eq-bar"></div>
+                    <div class="eq-bar"></div>
+                    <div class="eq-bar"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Control Toggles Panel (Gain Control, Mic Boost, Filter Noise) -->
+        <div class="flex items-center justify-around bg-black/20 rounded-2xl py-3 border border-white/5">
+            <button id="btn-gain" class="flex items-center gap-1.5 text-xs font-medium text-gray-500 hover:text-blue-400 transition cursor-pointer">
+                <i class="fa-solid fa-gauge-high"></i>
+                <span>Gain Control</span>
+            </button>
+            <div class="h-4 w-[1px] bg-white/10"></div>
+            <button id="btn-boost" class="flex items-center gap-1.5 text-xs font-medium text-gray-500 hover:text-purple-400 transition cursor-pointer">
+                <i class="fa-solid fa-microphone-lines"></i>
+                <span>Mic Boost</span>
+            </button>
+            <div class="h-4 w-[1px] bg-white/10"></div>
+            <button id="btn-filter" class="flex items-center gap-1.5 text-xs font-medium text-gray-500 hover:text-emerald-400 transition cursor-pointer">
+                <i class="fa-solid fa-filter text-xs"></i>
+                <span>Filter Noise</span>
+            </button>
+        </div>
+
+        <!-- Speak Translation bottom switch card -->
+        <div id="speak-translation-card" class="bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-2xl p-3 flex items-center justify-between border border-white/5 cursor-pointer hover:border-white/10 transition">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-white/5 flex items-center justify-center text-indigo-400">
+                    <i class="fa-solid fa-comment-dots text-sm"></i>
+                </div>
+                <div>
+                    <h3 class="text-white text-sm font-semibold">Speak Translation</h3>
+                    <p class="text-gray-500 text-[11px]">Let the AI speak the translation for you</p>
+                </div>
+            </div>
+            <!-- Interactive Switch -->
+            <div id="speak-switch" class="w-9 h-5 bg-white/10 rounded-full p-0.5 transition-colors relative">
+                <div class="w-4 h-4 bg-gray-400 rounded-full transition-transform" id="switch-handle"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Frontend logic with Web Speech STT, Speech Synthesis TTS & Backend Fetch -->
+    <script>
+        // 🟢 [YAHAN APNA DEPLOYED RENDER BACKEND URL DALO BHAI]
+        // E.g., "https://kewa-translator-api.onrender.com"
+        const BACKEND_URL = "YOUR_RENDER_BACKEND_URL_HERE"; 
+
+        const fromText = document.getElementById('from-text');
+        const toText = document.getElementById('to-text');
+        const fromLangSelect = document.getElementById('from-lang-select');
+        const toLangSelect = document.getElementById('to-lang-select');
+        const charCounter = document.getElementById('char-counter');
+        const swapBtn = document.getElementById('swap-btn');
+        
+        const micBtnFrom = document.getElementById('mic-btn-from');
+        const micLabelFrom = document.getElementById('mic-label-from');
+        const micBtnTo = document.getElementById('mic-btn-to');
+        const micLabelTo = document.getElementById('mic-label-to');
+        
+        const centralVoiceOrb = document.getElementById('central-voice-orb');
+        const orbIcon = document.getElementById('orb-icon');
+        const leftWave = document.getElementById('left-wave');
+        const rightWave = document.getElementById('right-wave');
+        const statusLabel = document.getElementById('waveform-status-label');
+
+        // Feature controls
+        const btnGain = document.getElementById('btn-gain');
+        const btnBoost = document.getElementById('btn-boost');
+        const btnFilter = document.getElementById('btn-filter');
+        const speakTranslationCard = document.getElementById('speak-translation-card');
+        const speakSwitch = document.getElementById('speak-switch');
+        const switchHandle = document.getElementById('switch-handle');
+
+        let isSpeakOnTranslation = true; // Auto TTS on default
+        let isRecording = false;
+        let activeRecordingChannel = 'from'; // 'from' or 'to'
+        let recognition;
+
+        // Initialize Speak on Translation toggle design
+        function updateSpeakToggle() {
+            if (isSpeakOnTranslation) {
+                speakSwitch.classList.replace('bg-white/10', 'bg-blue-500');
+                switchHandle.classList.add('translate-x-4');
+                switchHandle.classList.replace('bg-gray-400', 'bg-white');
+            } else {
+                speakSwitch.classList.replace('bg-blue-500', 'bg-white/10');
+                switchHandle.classList.remove('translate-x-4');
+                switchHandle.classList.replace('bg-white', 'bg-gray-400');
+            }
+        }
+        updateSpeakToggle();
+        speakTranslationCard.addEventListener('click', () => {
+            isSpeakOnTranslation = !isSpeakOnTranslation;
+            updateSpeakToggle();
+        });
+
+        // Toggle Pill Controls styling
+        function setupToggleBtn(btn, activeColor) {
+            btn.addEventListener('click', () => {
+                btn.classList.toggle('text-gray-500');
+                btn.classList.toggle(activeColor);
+            });
+        }
+        setupToggleBtn(btnGain, 'text-blue-400');
+        setupToggleBtn(btnBoost, 'text-purple-400');
+        setupToggleBtn(btnFilter, 'text-emerald-400');
+
+        // Character counter update
+        fromText.addEventListener('input', () => {
+            const count = fromText.value.length;
+            charCounter.textContent = `${count} / 500`;
+            if (count > 0) {
+                // Auto translate on typing trigger
+                debounceTranslation();
+            }
+        });
+
+        // Debounce timer for smooth direct typing translation
+        let debounceTimer;
+        function debounceTranslation() {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(triggerTranslation, 1000);
+        }
+
+        // Language Swap functionality
+        swapBtn.addEventListener('click', () => {
+            const tempVal = fromLangSelect.value;
+            fromLangSelect.value = toLangSelect.value;
+            toLangSelect.value = tempVal;
+
+            const tempText = fromText.value;
+            if(tempText && tempText !== "Type or speak something...") {
+                fromText.value = toText.textContent === "Translation will appear here..." ? "" : toText.textContent;
+                toText.textContent = tempText;
+            }
+        });
+
+        // Browser Native Speech Recognition Setup
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (SpeechRecognition) {
+            recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = false;
+
+            recognition.onstart = () => {
+                isRecording = true;
+                centralVoiceOrb.classList.add('recording');
+                leftWave.classList.add('recording');
+                rightWave.classList.add('recording');
+                orbIcon.className = "fa-solid fa-circle-notch animate-spin text-white text-xl";
+                
+                if (activeRecordingChannel === 'from') {
+                    micBtnFrom.classList.replace('bg-blue-500/10', 'bg-red-500/20');
+                    micBtnFrom.classList.replace('text-blue-400', 'text-red-400');
+                    micLabelFrom.textContent = "Listening...";
+                    statusLabel.textContent = "Listening (From Side)...";
+                } else {
+                    micBtnTo.classList.replace('bg-purple-500/10', 'bg-red-500/20');
+                    micBtnTo.classList.replace('text-purple-400', 'text-red-400');
+                    micLabelTo.textContent = "Listening...";
+                    statusLabel.textContent = "Listening (To Side)...";
+                }
+            };
+
+            recognition.onerror = (e) => {
+                console.error("Speech Recognition Error: ", e);
+                stopRecordingUI();
+            };
+
+            recognition.onend = () => {
+                stopRecordingUI();
+            };
+
+            recognition.onresult = (event) => {
+                const speechResult = event.results[0][0].transcript;
+                if (activeRecordingChannel === 'from') {
+                    fromText.value = speechResult;
+                    charCounter.textContent = `${speechResult.length} / 500`;
+                    triggerTranslation();
+                } else {
+                    // Bi-directional translation: Listening from TO side means translating back to FROM side
+                    fromText.value = speechResult;
+                    // Switch temporarily to compute backwards or perform target to source
+                    triggerBackwardsTranslation(speechResult);
+                }
+            };
+        } else {
+            console.warn("Speech recognition is not supported on this browser.");
+            micLabelFrom.textContent = "STT Unsupported";
+            micLabelTo.textContent = "STT Unsupported";
+        }
+
+        function stopRecordingUI() {
+            isRecording = false;
+            centralVoiceOrb.classList.remove('recording');
+            leftWave.classList.remove('recording');
+            rightWave.classList.remove('recording');
+            orbIcon.className = "fa-solid fa-microphone text-white text-xl";
+            statusLabel.textContent = "Tap to Speak";
+
+            // Reset FROM channel styling
+            micBtnFrom.classList.replace('bg-red-500/20', 'bg-blue-500/10');
+            micBtnFrom.classList.replace('text-red-400', 'text-blue-400');
+            micLabelFrom.textContent = "Voice Input";
+
+            // Reset TO channel styling
+            micBtnTo.classList.replace('bg-red-500/20', 'bg-purple-500/10');
+            micBtnTo.classList.replace('text-red-400', 'text-purple-400');
+            micLabelTo.textContent = "Voice Input";
+        }
+
+        // Voice Orb triggers current channel recording
+        centralVoiceOrb.addEventListener('click', () => {
+            if (isRecording) {
+                recognition.stop();
+            } else {
+                startRecording(activeRecordingChannel);
+            }
+        });
+
+        // Trigger recording per specific language side (Bi-directional)
+        function startRecording(channel) {
+            if (!recognition) {
+                alert("Voice capture is not supported on this browser.");
+                return;
+            }
+            activeRecordingChannel = channel;
+            // Get lang code from selects
+            recognition.lang = channel === 'from' ? fromLangSelect.value : toLangSelect.value;
+            recognition.start();
+        }
+
+        micBtnFrom.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (isRecording && activeRecordingChannel === 'from') {
+                recognition.stop();
+            } else {
+                if(isRecording) recognition.stop();
+                setTimeout(() => startRecording('from'), 300);
+            }
+        });
+
+        micBtnTo.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (isRecording && activeRecordingChannel === 'to') {
+                recognition.stop();
+            } else {
+                if(isRecording) recognition.stop();
+                setTimeout(() => startRecording('to'), 300);
+            }
+        });
+
+        // Standard Translation (From -> To)
+        function triggerTranslation() {
+            const textToTranslate = fromText.value.trim();
+            if (!textToTranslate) return;
+
+            toText.textContent = "Translating...";
+            toText.className = "text-gray-400 italic animate-pulse";
+
+            const fromLangName = fromLangSelect.options[fromLangSelect.selectedIndex].text;
+            const toLangName = toLangSelect.options[toLangSelect.selectedIndex].text;
+
+            // Fetch to deployed Python/Render Backend
+            fetch(`${BACKEND_URL}/translate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    text: textToTranslate,
+                    from_lang: fromLangName,
+                    to_lang: toLangName
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.translation) {
+                    toText.textContent = data.translation;
+                    toText.className = "text-white font-medium";
+                    
+                    // Auto-Speak if toggled
+                    if (isSpeakOnTranslation) {
+                        speakText(data.translation, toLangSelect.value);
+                    }
+                } else {
+                    toText.textContent = "Error in Translation.";
+                }
+            })
+            .catch(() => {
+                toText.textContent = "Backend Connection failed.";
+                toText.className = "text-red-400";
+            });
+        }
+
+        // Backwards Translation (To -> From side)
+        function triggerBackwardsTranslation(textToTranslate) {
+            toText.textContent = textToTranslate;
+            toText.className = "text-white font-medium";
+            fromText.value = "Translating back...";
+
+            const fromLangName = fromLangSelect.options[fromLangSelect.selectedIndex].text;
+            const toLangName = toLangSelect.options[toLangSelect.selectedIndex].text;
+
+            fetch(`${BACKEND_URL}/translate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    text: textToTranslate,
+                    from_lang: toLangName, // Swapped languages
+                    to_lang: fromLangName
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.translation) {
+                    fromText.value = data.translation;
+                    charCounter.textContent = `${data.translation.length} / 500`;
+                    
+                    if (isSpeakOnTranslation) {
+                        speakText(data.translation, fromLangSelect.value);
+                    }
+                }
+            });
+        }
+
+        // Text-to-Speech (TTS) Voice Player
+        function speakText(text, locale) {
+            if ('speechSynthesis' in window) {
+                // Stop ongoing playbacks
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = locale;
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        // Action controls (TTS, Copy, Share)
+        document.getElementById('btn-speak').addEventListener('click', () => {
+            const textToSpeak = toText.textContent;
+            if(textToSpeak && textToSpeak !== "Translation will appear here...") {
+                speakText(textToSpeak, toLangSelect.value);
+            }
+        });
+
+        document.getElementById('quick-listen-btn').addEventListener('click', () => {
+            const textToSpeak = toText.textContent;
+            if(textToSpeak && textToSpeak !== "Translation will appear here...") {
+                speakText(textToSpeak, toLangSelect.value);
+            }
+        });
+
+        document.getElementById('btn-copy').addEventListener('click', () => {
+            const textToCopy = toText.textContent;
+            if (textToCopy && textToCopy !== "Translation will appear here...") {
+                navigator.clipboard.writeText(textToCopy);
+                alert("Translation Copied!");
+            }
+        });
+
+        document.getElementById('btn-share').addEventListener('click', () => {
+            const textToShare = toText.textContent;
+            if (navigator.share && textToShare && textToShare !== "Translation will appear here...") {
+                navigator.share({
+                    title: 'AI Translation',
+                    text: textToShare
+                });
+            } else {
+                alert("Sharing feature is not supported in this device/browser.");
+            }
+        });
+    </script>
+</body>
+</html>
